@@ -34,9 +34,7 @@ public class EnclaveReceiveHandler extends AbstractActionHandler<EnclaveDecryptR
     @Override
     public EnclaveDecryptResponse handle(EnclaveDecryptRequest enclaveRequest) {
         EnclaveDecryptResponse result = new EnclaveDecryptResponse();
-        String value = "AQICAHjWrCWxTGmgh6bllC2eSK4AzRtTQkh6WDP5eki+r/CsAAHzuAFnYf6JASJT5sA7CspGAAAAZDBiBgkqhkiG9w0BBwagVTBTAgEAME4GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMCrquzTi0ualmpTVLAgEQgCEubhtSr6LGnlrD0KwO6+ubgpuLlEjlg4b4qMExFIoGTp8=";
-        System.out.println("Asset received " + enclaveRequest.getValue());
-        String base64EncodedString = kmsClient.decrypt(enclaveRequest.getAwsCredentials(),  value);
+        String base64EncodedString = kmsClient.decrypt(enclaveRequest.getAwsCredentials(),  enclaveRequest.getValue());
         byte[] decodedBytes = Base64.getDecoder().decode(base64EncodedString);
         String decodedString = new String(decodedBytes);
         result.setValue("Base64 encoded string " + base64EncodedString + " Decrypted result from nitro enclave is " + decodedString);
