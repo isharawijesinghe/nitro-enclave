@@ -1,6 +1,16 @@
 # Data source for current AWS account
 data "aws_caller_identity" "current" {}
 
+# ECR Repository
+resource "aws_ecr_repository" "nitro_enclave_repo" {
+  name                 = "nitro-enclave-repo"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "nitro_instance" {
   ami           = "ami-01816d07b1128cd2d"
@@ -11,11 +21,11 @@ resource "aws_instance" "nitro_instance" {
   iam_instance_profile   = aws_iam_instance_profile.instance_profile.name
 
   connection {
-        type        = "ssh"
-        user        = "ec2-user"
-        private_key = file("C:\\SourceCode\\RFQ\\xxxxxxx.pem")
-        host        = self.public_ip
-      }
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = file("C:\\SourceCode\\RFQ\\xxxxxxx.pem")
+    host        = self.public_ip
+  }
 
   enclave_options {
     enabled = true
@@ -94,16 +104,9 @@ resource "aws_security_group" "nitro_sg" {
   name_prefix = "nitro-sg"
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Consider restricting this to your IP for better security
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -151,10 +154,15 @@ resource "aws_iam_policy" "ecr_access_policy" {
       Action = [
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer"
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:ecr:region:account-id:repository/repository-name"
+      Resource = aws_ecr_repository.nitro_enclave_repo.arn
     }]
   })
 }
